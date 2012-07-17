@@ -1,0 +1,17 @@
+{
+    "name": "gelf-node"
+  , "version": "0.0.1"
+  , "private": true
+  , "scripts": {
+      "test": "make"
+  }
+  , "dependencies": {
+
+  }
+  , "devDependencies": {
+      "chai": ""
+    , "mocha": ""
+    , "sinon-chai": ""
+    , "sinon": ""
+  }
+}
