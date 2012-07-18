@@ -85,4 +85,13 @@ describe('Gelf', function(done) {
     gelf.emit('gelf.log', 'Mr. Lampe has left the building.');
   });
 
+  it('should throw an exception if config is incomplete', function() {
+      var test = function() {
+        new Gelf({"foo": "bar"});
+      };
+
+      expect(test).to.throw();
+      expect(test).to.throw(Error);
+  });
+
 });

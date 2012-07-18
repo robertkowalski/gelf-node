@@ -8,13 +8,24 @@ var Gelf = function(config) {
 
   if (!config) {
     self.config = {
-      graylogStdPort: 12201,
-      graylogStdHost: '127.0.0.1',
-      connection: 'wan'
-
+      graylogPort: 12201,
+      graylogHostname: '127.0.0.1',
+      connection: 'wan',
+      chunkSizeWan: 1420,
+      chunkSizeLan: 8154
     };
   } else {
     self.config = config;
+  }
+
+  /* test self.config */
+  if (!self.config
+      || !self.config.graylogPort
+      || !self.config.graylogHostname
+      || !self.config.connection
+      || !self.config.chunkSizeWan
+      || !self.config.chunkSizeLan) {
+    throw new Error('config in constructor is missing values');
   }
 
   self.on('gelf.message', function(message) { 
@@ -27,14 +38,15 @@ var Gelf = function(config) {
     var message,
         json;
 
-    if (!input || typeof input === 'string') {
+    if (!input) {
       json = {};
-      if (typeof input === 'string') {
-        json.short_message = input;
-      }
+    } else if (typeof input === 'string') {
+      json = {};
+      json.short_message = input;
     } else {
       json = input;
     }
+
     if (!json.version) {
       json.version = '1.0';
     }
@@ -71,7 +83,7 @@ Gelf.prototype.sendMessage = function(message) {
   var self = this,
       client = dgram.createSocket('udp4');
 
-  client.send(message, 0, message.length, self.config.graylogStdPort, self.config.graylogStdHost, function(err, bytes) {
+  client.send(message, 0, message.length, self.config.graylogPort, self.config.graylogHostname, function(err, bytes) {
     if (err) {
       throw err;
     }   
