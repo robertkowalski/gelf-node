@@ -1,6 +1,14 @@
 {
     "name": "gelf-node"
-  , "version": "0.0.1"
+  , "version": "0.0.2"
+  , "license": "MIT"
+  , "author": "Robert Kowalski <rok@kowalski.gd>"
+  , "repository": { 
+        "type": "git"
+      , "url": "https://github.com/robertkowalski/gelf-node.git" 
+  }
+  , "description": ""
+  , "keywords": ["graylog", "gelf", "log", "syslog"]
   , "private": true
   , "scripts": {
       "test": "make"
