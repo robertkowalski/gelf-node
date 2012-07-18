@@ -1,5 +1,7 @@
 var expect = require('chai').expect,
-    Gelf = require('../Gelf');
+    sinon = require('sinon'),
+    Gelf = require('../Gelf'),
+    inflate = require('zlib').inflate;
 
 describe('Gelf', function(done) {
 
@@ -25,8 +27,33 @@ describe('Gelf', function(done) {
     server.bind(graylogStdPort);
 
     var gelf = new Gelf(null);
-    gelf.sendMessage('bar');
+    gelf.sendMessage(new Buffer('bar'));
   });
+
+  it('should emit and receive events with attached event listeners', function(done) {
+    var gelf = new Gelf(null);
+
+    gelf.on('graylogmessage', function(message) {
+      expect(message).to.equal('meh');
+      done();
+    });
+
+    gelf.emit('graylogmessage', 'meh');
+  });
+
+  it('should deflate strings and call the callback afterwards', function(done) {
+    var gelf = new Gelf(null);
+
+    var callback = function(buffer) {
+      inflate(buffer, function(err, buf) {
+        expect(buf.toString()).to.equal('bla');
+        done();
+      });
+    };
+
+    gelf.compress('bla', callback);
+  });
+
 
 
 });
