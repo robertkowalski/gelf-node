@@ -1,7 +1,8 @@
 var expect = require('chai').expect,
     sinon = require('sinon'),
     Gelf = require('../Gelf'),
-    inflate = require('zlib').inflate;
+    inflate = require('zlib').inflate,
+    os = require('os');
 
 describe('Gelf', function(done) {
 
@@ -54,6 +55,34 @@ describe('Gelf', function(done) {
     gelf.compress('bla', callback);
   });
 
+  it('should add missing properties to the gelf-json', function(done) {
+    var gelf = new Gelf(null);
 
+    var stub = sinon.stub(gelf, 'compress', function(message) {
+      var json = JSON.parse(message);
+      expect(json.version).to.equal('1.0');
+      expect(json.host).to.equal(os.hostname());
+      expect(json.facility).to.equal('node.js');
+      expect(json.short_message).to.equal('Gelf Shortmessage');
+
+      done();
+    });
+
+    gelf.emit('gelf.log', null);
+  });
+
+  it('should handle a string as shortmessage', function(done) {
+    var gelf = new Gelf(null);
+
+    var stub = sinon.stub(gelf, 'compress', function(message) {
+      var json = JSON.parse(message);
+
+      expect(json.short_message).to.equal('Mr. Lampe has left the building.');
+
+      done();
+    });
+
+    gelf.emit('gelf.log', 'Mr. Lampe has left the building.');
+  });
 
 });

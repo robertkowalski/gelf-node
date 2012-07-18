@@ -1,6 +1,7 @@
 var deflate = require('zlib').deflate,
     dgram = require('dgram'),
-    EventEmitter = require('events').EventEmitter;
+    EventEmitter = require('events').EventEmitter,
+    os = require('os');
 
 var Gelf = function(config) {
   var self = this;
@@ -16,15 +17,42 @@ var Gelf = function(config) {
     self.config = config;
   }
 
-  self.on('gelf.message', function(json) {
-    var message = JSON.stringify(json);
+  self.on('gelf.message', function(message) { 
     self.compress(message, function(buffer) {
       self.sendMessage(buffer);
     });
   });
 
-  self.on('gelf.log', function() {
+  self.on('gelf.log', function(input) {
+    var message,
+        json;
 
+    if (!input || typeof input === 'string') {
+      json = {};
+      if (typeof input === 'string') {
+        json.short_message = input;
+      }
+    } else {
+      json = input;
+    }
+    if (!json.version) {
+      json.version = '1.0';
+    }
+    if (!json.host) {
+      json.host = os.hostname();
+    }
+    if (!json.timestamp) {
+      json.timestamp = new Date().getTime() * 1000;
+    }
+    if (!json.facility) {
+      json.facility = 'node.js';
+    }
+    if (!json.short_message) {
+      json.short_message = 'Gelf Shortmessage';
+    }
+    message = JSON.stringify(json);
+
+    self.emit('gelf.message', message);
   });
 };
 
