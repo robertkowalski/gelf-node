@@ -15,6 +15,9 @@
     "test": "make"
   },
   "main": "gelf.js",
+  "engines" : {
+    "node" : ">=0.6.0"
+  },
   "dependencies": {
 
   },
