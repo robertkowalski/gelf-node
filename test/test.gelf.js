@@ -1,10 +1,18 @@
-var expect = require('chai').expect,
+var chai = require('chai'),
     sinon = require('sinon'),
+    sinonChai = require('sinon-chai'),
     Gelf = require('../Gelf'),
     inflate = require('zlib').inflate,
     os = require('os');
 
+chai.use(sinonChai);
+var expect = chai.expect;
+
 describe('Gelf', function(done) {
+
+  afterEach(function() {
+
+  });
 
   it('should be an instance of EventEmitter', function() {
     var gelf = new Gelf(null);
@@ -28,7 +36,7 @@ describe('Gelf', function(done) {
     server.bind(graylogStdPort);
 
     var gelf = new Gelf(null);
-    gelf.sendMessage(new Buffer('bar'));
+    gelf.sendSingleMessage(new Buffer('bar'));
   });
 
   it('should emit and receive events with attached event listeners', function(done) {
@@ -58,7 +66,7 @@ describe('Gelf', function(done) {
   it('should add missing properties to the gelf-json', function(done) {
     var gelf = new Gelf(null);
 
-    var stub = sinon.stub(gelf, 'compress', function(message) {
+    sinon.stub(gelf, 'compress', function(message) {
       var json = JSON.parse(message);
       expect(json.version).to.equal('1.0');
       expect(json.host).to.equal(os.hostname());
@@ -74,7 +82,7 @@ describe('Gelf', function(done) {
   it('should handle a string as shortmessage', function(done) {
     var gelf = new Gelf(null);
 
-    var stub = sinon.stub(gelf, 'compress', function(message) {
+    sinon.stub(gelf, 'compress', function(message) {
       var json = JSON.parse(message);
 
       expect(json.short_message).to.equal('Mr. Lampe has left the building.');
@@ -92,6 +100,36 @@ describe('Gelf', function(done) {
 
       expect(test).to.throw();
       expect(test).to.throw(Error);
+  });
+
+  it('should call prepareMultipleChunks() if message larger than maxSize', function(done) {
+    var gelf = new Gelf({
+      graylogPort: 12201,
+      graylogHostname: '127.0.0.1',
+      connection: 'wan',
+      maxChunkSizeWan: 10,
+      maxChunkSizeLan: 8154
+    });
+
+    var stub = sinon.stub(gelf, 'prepareMultipleChunks', function() {
+
+      expect(stub).to.have.been.calledOnce;
+      done();
+    });
+    gelf.emit('gelf.log', 'mehgssssssggggggggguiguguigiugigigiugigigigig');
+  });
+
+  it('prepares chunks according to the given chunksize', function() {
+    var gelf = new Gelf();
+
+    var callback = sinon.spy();
+    var secondCallback = sinon.spy();
+
+    gelf.prepareMultipleChunks('123456789', 2, callback);
+    gelf.prepareMultipleChunks('1234567890', 2, secondCallback);
+
+    expect(callback).to.have.been.calledWith(['12', '34', '56', '78', '9']);
+    expect(secondCallback).to.have.been.calledWith(['12', '34', '56', '78', '90']);
   });
 
 });

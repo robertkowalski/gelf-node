@@ -11,8 +11,8 @@ var Gelf = function(config) {
       graylogPort: 12201,
       graylogHostname: '127.0.0.1',
       connection: 'wan',
-      chunkSizeWan: 1420,
-      chunkSizeLan: 8154
+      maxChunkSizeWan: 1420,
+      maxChunkSizeLan: 8154
     };
   } else {
     self.config = config;
@@ -23,14 +23,14 @@ var Gelf = function(config) {
       || !self.config.graylogPort
       || !self.config.graylogHostname
       || !self.config.connection
-      || !self.config.chunkSizeWan
-      || !self.config.chunkSizeLan) {
+      || !self.config.maxChunkSizeWan
+      || !self.config.maxChunkSizeLan) {
     throw new Error('config in constructor is missing values');
   }
 
-  self.on('gelf.message', function(message) { 
+  self.on('gelf.message', function(message) {
     self.compress(message, function(buffer) {
-      self.sendMessage(buffer);
+      self.processMessage(buffer);
     });
   });
 
@@ -74,22 +74,59 @@ Gelf.prototype.compress = function(message, callback) {
   deflate(message, function(err, buf) {
     if (err) {
       throw err;
-    }        
+    }
     callback && callback(buf);
   });
 };
 
-Gelf.prototype.sendMessage = function(message) {
+Gelf.prototype.sendSingleMessage = function(message) {
   var self = this,
       client = dgram.createSocket('udp4');
 
   client.send(message, 0, message.length, self.config.graylogPort, self.config.graylogHostname, function(err, bytes) {
     if (err) {
       throw err;
-    }   
+    }
     client.close();
   });
 };
 
+Gelf.prototype.processMessage = function(buffer) {
+  var self = this,
+      config = self.config,
+      chunkSize = buffer.length;
+
+  if (config.connection === 'wan') {
+    if (chunkSize > config.maxChunkSizeWan) {
+        self.prepareMultipleChunks(buffer, config.maxChunkSizeWan, self.sendMultipleChunks);
+        return;
+    }
+  } else if (self.config.connection === 'lan') {
+    if (chunkSize > config.maxChunkSizeLan) {
+        self.prepareMultipleChunks(buffer, config.maxChunkSizeLan, self.sendMultipleChunks);
+        return;
+    }
+  }
+  self.sendSingleMessage(buffer);
+};
+
+Gelf.prototype.prepareMultipleChunks = function(buffer, chunkSize, callback) {
+  var chunkArray = [],
+      index;
+
+  for (index = 0; index < buffer.length; index += chunkSize) {
+    chunkArray.push(buffer.slice(index, index + chunkSize));
+  }
+
+  callback && callback(chunkArray);
+};
+
+Gelf.prototype.getMessageId = function() {
+  return new Date().getTime() * 1000 + '' + Math.ceil(10000 * Math.random());
+};
+
+Gelf.prototype.sendMultipleChunks = function() {
+
+};
 
 module.exports = Gelf;
