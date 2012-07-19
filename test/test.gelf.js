@@ -36,7 +36,7 @@ describe('Gelf', function(done) {
     server.bind(graylogStdPort);
 
     var gelf = new Gelf(null);
-    gelf.sendSingleMessage(new Buffer('bar'));
+    gelf.sendMessage(new Buffer('bar'));
   });
 
   it('should emit and receive events with attached event listeners', function(done) {
@@ -116,20 +116,26 @@ describe('Gelf', function(done) {
       expect(stub).to.have.been.calledOnce;
       done();
     });
+
+    sinon.stub(gelf, 'prepareDatagrams');
+    sinon.stub(gelf, 'sendMessage');
+    sinon.stub(gelf, 'sendMultipleMessages');
+
     gelf.emit('gelf.log', 'mehgssssssggggggggguiguguigiugigigiugigigigig');
   });
 
   it('prepares chunks according to the given chunksize', function() {
     var gelf = new Gelf();
 
-    var callback = sinon.spy();
-    var secondCallback = sinon.spy();
+    expect(gelf.prepareMultipleChunks('123456789', 2)).to.deep.equal([['1', '2'], ['3', '4'], ['5', '6'], ['7', '8'], ['9']]);
+    expect(gelf.prepareMultipleChunks('1234567890', 2)).to.deep.equal([['1', '2'], ['3', '4'], ['5', '6'], ['7', '8'], ['9', '0']]);
+  });
 
-    gelf.prepareMultipleChunks('123456789', 2, callback);
-    gelf.prepareMultipleChunks('1234567890', 2, secondCallback);
+  it('returns an Array from the buffer when calling getMessageId()', function() {
+    var gelf = new Gelf();
 
-    expect(callback).to.have.been.calledWith(['12', '34', '56', '78', '9']);
-    expect(secondCallback).to.have.been.calledWith(['12', '34', '56', '78', '90']);
+    expect(Array.isArray(gelf.getMessageId())).to.be.ok;
+    expect(gelf.getMessageId().length).to.deep.equal(8);
   });
 
 });
