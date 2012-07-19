@@ -1,25 +1,33 @@
 {
-    "name": "gelf-node"
-  , "version": "0.0.2"
-  , "license": "MIT"
-  , "author": "Robert Kowalski <rok@kowalski.gd>"
-  , "repository": { 
-        "type": "git"
-      , "url": "https://github.com/robertkowalski/gelf-node.git" 
-  }
-  , "description": ""
-  , "keywords": ["graylog", "gelf", "log", "syslog"]
-  , "private": true
-  , "scripts": {
-      "test": "make"
-  }
-  , "dependencies": {
+  "name": "gelf-node",
+  "description": "",
+  "version": "0.0.2",
+  "license": "MIT",
+  "author": "Robert Kowalski <rok@kowalski.gd>",
+  "contributors": [
+    { "name": "Robert Kowalski", "email": "rok@kowalski.gd" }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/robertkowalski/gelf-node.git",
+  },
+  "scripts": {
+    "test": "make"
+  },
+  "main": "gelf.js",
+  "dependencies": {
 
-  }
-  , "devDependencies": {
-      "chai": ""
-    , "mocha": ""
-    , "sinon-chai": ""
-    , "sinon": ""
-  }
+  },
+  "devDependencies": {
+    "chai": "",
+    "mocha": "",
+    "sinon-chai": "",
+    "sinon": "",
+  },
+  "keywords": [
+    "graylog",
+    "gelf",
+    "log",
+    "syslog"
+  ]
 }
