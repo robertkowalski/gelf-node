@@ -12,7 +12,7 @@ var Gelf = function(config) {
       graylogPort: 12201,
       graylogHostname: '127.0.0.1',
       connection: 'wan',
-      maxChunkSizeWan: 10,
+      maxChunkSizeWan: 1420,
       maxChunkSizeLan: 8154
     };
   } else {
@@ -46,6 +46,10 @@ var Gelf = function(config) {
       json.short_message = input;
     } else {
       json = input;
+    }
+
+    if (json._id) {
+      throw Error('_id is not allowed');
     }
 
     if (!json.version) {
@@ -153,7 +157,7 @@ Gelf.prototype.sendMultipleMessages = function(datagrams) {
   var self = this;
 
   datagrams.forEach(function(buffer) {
-    self.sendSingleMessage(buffer);
+    self.sendMessage(buffer);
   });
 };
 

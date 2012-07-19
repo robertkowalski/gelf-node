@@ -102,6 +102,17 @@ describe('Gelf', function(done) {
       expect(test).to.throw(Error);
   });
 
+  it('should throw an exception if addiontal parameter is named _id', function() {
+      var gelf = new Gelf();
+
+      var test = function() {
+        gelf.emit('gelf.log', {_id: 'bla'});
+      };
+
+      expect(test).to.throw();
+      expect(test).to.throw(Error);
+  });
+
   it('should call prepareMultipleChunks() if message larger than maxSize', function(done) {
     var gelf = new Gelf({
       graylogPort: 12201,
