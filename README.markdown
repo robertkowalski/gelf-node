@@ -1,8 +1,7 @@
 # gelf-node
-## gelf-node is a full implementation for sending GELF-messages in node.js
+## gelf-node is a full implementation for sending messages in GELF (Graylog Extended Log Format) from node.js
 
-# Example
-
+# Example Usage
 
 ## Initialize with defaults
 ```javascript
