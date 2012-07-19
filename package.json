@@ -9,7 +9,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/robertkowalski/gelf-node.git",
+    "url": "https://github.com/robertkowalski/gelf-node.git"
   },
   "scripts": {
     "test": "make"
@@ -22,7 +22,7 @@
     "chai": "",
     "mocha": "",
     "sinon-chai": "",
-    "sinon": "",
+    "sinon": ""
   },
   "keywords": [
     "graylog",
