@@ -1,6 +1,6 @@
 {
   "name": "gelf-node",
-  "description": "",
+  "description": "gelf-node is a full implementation for sending GELF-messages in node.js",
   "version": "1.0.0",
   "license": "MIT",
   "author": "Robert Kowalski <rok@kowalski.gd>",

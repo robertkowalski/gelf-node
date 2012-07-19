@@ -1,5 +1,5 @@
 # gelf-node
-## gelf-node is a full GELF implementation for node.js
+## gelf-node is a full implementation for sending GELF-messages in node.js
 
 # Example
 
