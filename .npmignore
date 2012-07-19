@@ -1,0 +1,10 @@
+.DS_Store
+*~
+.project
+.settings
+node_modules
+npm-debug.log
+coverage.html
+test.js
+test
+.git*
