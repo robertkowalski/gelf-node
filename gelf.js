@@ -105,23 +105,25 @@ Gelf.prototype.processMessage = function(buffer) {
 
   if (config.connection === 'wan') {
     if (chunkSize > config.maxChunkSizeWan) {
-        self.processMultipleChunks(buffer, config.maxChunkSizeWan);
-        return;
+      self.processMultipleChunks(buffer, config.maxChunkSizeWan);
+      return;
     }
   } else if (self.config.connection === 'lan') {
     if (chunkSize > config.maxChunkSizeLan) {
-        self.processMultipleChunks(buffer, config.maxChunkSizeLan);
-        return;
+      self.processMultipleChunks(buffer, config.maxChunkSizeLan);
+      return;
     }
   }
   self.sendMessage(buffer);
 };
 
 Gelf.prototype.processMultipleChunks = function(buffer, chunkSize) {
-  var self = this;
+  var self = this,
+      chunkArray,
+      datagrams;
 
-  var chunkArray = self.prepareMultipleChunks(buffer, chunkSize);
-  var datagrams = self.prepareDatagrams(chunkArray);
+  chunkArray = self.prepareMultipleChunks(buffer, chunkSize);
+  datagrams = self.prepareDatagrams(chunkArray);
 
   self.sendMultipleMessages(datagrams);
 };
