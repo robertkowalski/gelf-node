@@ -59,7 +59,7 @@ var Gelf = function(config) {
       json.host = os.hostname();
     }
     if (!json.timestamp) {
-      json.timestamp = new Date().getTime() * 1000;
+      json.timestamp = new Date().getTime() / 1000;
     }
     if (!json.facility) {
       json.facility = 'node.js';
