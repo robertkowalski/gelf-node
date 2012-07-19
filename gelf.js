@@ -73,7 +73,9 @@ var Gelf = function(config) {
   });
 };
 
-Gelf.prototype.__proto__ = EventEmitter.prototype;
+Gelf.prototype = Object.create(EventEmitter.prototype, {
+  constructor: {value: Gelf}
+});
 
 Gelf.prototype.compress = function(message, callback) {
   deflate(message, function(err, buf) {
