@@ -1,6 +1,6 @@
 {
-  "name": "gelf-node",
-  "description": "gelf-node is a full implementation for sending messages in GELF (Graylog Extended Log Format) from node.js",
+  "name": "gelf",
+  "description": "gelf is a full implementation for sending messages in GELF (Graylog Extended Log Format) from node.js",
   "version": "1.0.0",
   "license": "MIT",
   "author": "Robert Kowalski <rok@kowalski.gd>",
@@ -31,6 +31,6 @@
     "graylog",
     "gelf",
     "log",
-    "syslog"
+    "logging"
   ]
 }
