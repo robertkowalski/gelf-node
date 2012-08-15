@@ -142,11 +142,4 @@ describe('Gelf', function(done) {
     expect(gelf.prepareMultipleChunks('1234567890', 2)).to.deep.equal([['1', '2'], ['3', '4'], ['5', '6'], ['7', '8'], ['9', '0']]);
   });
 
-  it('returns an Array from the buffer when calling getMessageId()', function() {
-    var gelf = new Gelf();
-
-    expect(Array.isArray(gelf.getMessageId())).to.be.ok;
-    expect(gelf.getMessageId().length).to.deep.equal(8);
-  });
-
 });

@@ -123,9 +123,12 @@ Gelf.prototype.processMultipleChunks = function(buffer, chunkSize) {
       datagrams;
 
   chunkArray = self.prepareMultipleChunks(buffer, chunkSize);
-  datagrams = self.prepareDatagrams(chunkArray);
 
-  self.sendMultipleMessages(datagrams);
+  self.prepareDatagrams(chunkArray, function(err, datagrams) {
+    process.nextTick(function() {
+      self.sendMultipleMessages(datagrams);
+    });
+  });
 };
 
 Gelf.prototype.prepareMultipleChunks = function(buffer, chunkSize) {
@@ -139,22 +142,30 @@ Gelf.prototype.prepareMultipleChunks = function(buffer, chunkSize) {
   return chunkArray;
 };
 
-Gelf.prototype.prepareDatagrams = function(chunkArray) {
+Gelf.prototype.prepareDatagrams = function(chunkArray, callback) {
   var self = this,
       count = chunkArray.length,
       gelfMagicNumber = [0x1e, 0x0f],
-      msgId = self.getMessageId(),
       datagrams = [];
 
-  chunkArray.forEach(function(chunk, index) {
-    datagrams[index] = new Buffer(gelfMagicNumber.concat(msgId, index, count, chunk));
-  });
+  var createDatagramArray = function(msgId) {
+    chunkArray.forEach(function(chunk, index) {
+      datagrams[index] = new Buffer(gelfMagicNumber.concat(msgId, index, count, chunk));
+    });
+    callback && callback(null, datagrams);
+  }
 
-  return datagrams;
-};
+  var randomBytesCallback = function(ex, buf) {
+    if (ex) {
+      throw ex;
+    }
+    createDatagramArray(Array.prototype.slice.call(buf));
+  };
 
-Gelf.prototype.getMessageId = function() {
-  return Array.prototype.slice.call(crypto.randomBytes(8));
+  var getRandomBytes = function() {
+    crypto.randomBytes(8, randomBytesCallback);
+  };
+  getRandomBytes();
 };
 
 Gelf.prototype.sendMultipleMessages = function(datagrams) {
