@@ -114,7 +114,9 @@ Gelf.prototype.processMessage = function(buffer) {
       return;
     }
   }
-  self.sendMessage(buffer);
+  process.nextTick(function() {
+    self.sendMessage(buffer);
+  });
 };
 
 Gelf.prototype.processMultipleChunks = function(buffer, chunkSize) {
