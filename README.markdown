@@ -1,3 +1,5 @@
+[![build status](https://secure.travis-ci.org/robertkowalski/gelf-node.png)](http://travis-ci.org/robertkowalski/gelf-node)
+
 # gelf-node
 ## gelf-node is a full implementation for sending messages in GELF (Graylog Extended Log Format) from node.js
 

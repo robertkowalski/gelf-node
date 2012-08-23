@@ -1,7 +1,7 @@
 var chai = require('chai'),
     sinon = require('sinon'),
     sinonChai = require('sinon-chai'),
-    Gelf = require('../Gelf'),
+    Gelf = require('../gelf'),
     inflate = require('zlib').inflate,
     os = require('os');
 
