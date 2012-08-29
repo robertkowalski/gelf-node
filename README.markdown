@@ -13,13 +13,13 @@ npm install gelf
 ## Initialize with defaults
 ```javascript
 var Gelf = require('gelf');
-gelf = new Gelf(); // with default config
+var gelf = new Gelf(); // with default config
 ```
 
 ## Initialize with custom config
 ```javascript
 var Gelf = require('gelf');
-gelf = new Gelf({
+var gelf = new Gelf({
   graylogPort: 12201,
   graylogHostname: '127.0.0.1',
   connection: 'wan',
