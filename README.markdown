@@ -31,7 +31,7 @@ var gelf = new Gelf({
 
 ```javascript
 //send just a shortmessage
-gelf.emit('log', 'myshortmessage');
+gelf.emit('gelf.log', 'myshortmessage');
 
 //send a full message
 var message = {
@@ -48,7 +48,7 @@ var message = {
   "_something_else": "foo"
 };
 
-gelf.emit('log', message);
+gelf.emit('gelf.log', message);
 ```
 
 
