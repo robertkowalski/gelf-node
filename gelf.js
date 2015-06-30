@@ -49,7 +49,7 @@ var Gelf = function(config) {
     }
 
     if (json._id) {
-      throw Error('_id is not allowed');
+      return self.emitError(Error('_id is not allowed'));
     }
 
     if (!json.version) {
@@ -78,9 +78,10 @@ Gelf.prototype = Object.create(EventEmitter.prototype, {
 });
 
 Gelf.prototype.compress = function(message, callback) {
+  var self = this;
   deflate(message, function(err, buf) {
     if (err) {
-      throw err;
+      return self.emitError(err);
     }
     callback && callback(buf);
   });
@@ -90,9 +91,9 @@ Gelf.prototype.sendMessage = function(message) {
   var self = this,
       client = dgram.createSocket('udp4');
 
-  client.send(message, 0, message.length, self.config.graylogPort, self.config.graylogHostname, function(err, bytes) {
+  client.send(message, 0, message.length, self.config.graylogPort, self.config.graylogHostname, function(err/*, bytes*/) {
     if (err) {
-      throw err;
+      return self.emitError(err);
     }
     client.close();
   });
@@ -155,11 +156,11 @@ Gelf.prototype.prepareDatagrams = function(chunkArray, callback) {
       datagrams[index] = new Buffer(gelfMagicNumber.concat(msgId, index, count, chunk));
     });
     callback && callback(null, datagrams);
-  }
+  };
 
   var randomBytesCallback = function(ex, buf) {
     if (ex) {
-      throw ex;
+      return self.emitError(ex);
     }
     createDatagramArray(Array.prototype.slice.call(buf));
   };
@@ -176,6 +177,10 @@ Gelf.prototype.sendMultipleMessages = function(datagrams) {
   datagrams.forEach(function(buffer) {
     self.sendMessage(buffer);
   });
+};
+
+Gelf.prototype.emitError = function(error) {
+  this.emit('error', error);
 };
 
 module.exports = Gelf;
