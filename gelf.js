@@ -128,6 +128,9 @@ Gelf.prototype.processMultipleChunks = function(buffer, chunkSize) {
   chunkArray = self.prepareMultipleChunks(buffer, chunkSize);
 
   self.prepareDatagrams(chunkArray, function(err, datagrams) {
+    if (err) {
+      return self.emitError(err);
+    }
     process.nextTick(function() {
       self.sendMultipleMessages(datagrams);
     });
