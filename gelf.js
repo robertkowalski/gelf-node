@@ -30,8 +30,12 @@ var Gelf = function(config) {
   }
 
   self.on('gelf.message', function(message, callback) {
-    self.compress(message, function(buffer) {
-      self.processMessage(buffer, callback);
+    self.compress(message, function(error, buffer) {
+      if(error){
+        callback && callback(error);
+      } else {
+        self.processMessage(buffer, callback);
+      }
     });
   });
 
@@ -49,7 +53,9 @@ var Gelf = function(config) {
     }
 
     if (json._id) {
-      return self.emitError(Error('_id is not allowed'));
+      var error = new Error('_id is not allowed');
+      callback && callback(error);
+      return self.emitError(error);
     }
 
     if (!json.version) {
@@ -81,9 +87,10 @@ Gelf.prototype.compress = function(message, callback) {
   var self = this;
   deflate(message, function(err, buf) {
     if (err) {
+      callback && callback(err);
       return self.emitError(err);
     }
-    callback && callback(buf);
+    callback && callback(null, buf);
   });
 };
 
