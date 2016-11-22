@@ -29,13 +29,13 @@ var Gelf = function(config) {
     throw new Error('config in constructor is missing values');
   }
 
-  self.on('gelf.message', function(message) {
+  self.on('gelf.message', function(message, callback) {
     self.compress(message, function(buffer) {
-      self.processMessage(buffer);
+      self.processMessage(buffer, callback);
     });
   });
 
-  self.on('gelf.log', function(input) {
+  self.on('gelf.log', function(input, callback) {
     var message,
         json;
 
@@ -69,7 +69,7 @@ var Gelf = function(config) {
     }
     message = JSON.stringify(json);
 
-    self.emit('gelf.message', message);
+    self.emit('gelf.message', message, callback);
   });
 };
 
@@ -87,40 +87,42 @@ Gelf.prototype.compress = function(message, callback) {
   });
 };
 
-Gelf.prototype.sendMessage = function(message) {
+Gelf.prototype.sendMessage = function(message, callback) {
   var self = this,
       client = dgram.createSocket('udp4');
 
   client.send(message, 0, message.length, self.config.graylogPort, self.config.graylogHostname, function(err/*, bytes*/) {
     if (err) {
+      callback && callback(err);
       return self.emitError(err);
     }
+    callback && callback();
     client.close();
   });
 };
 
-Gelf.prototype.processMessage = function(buffer) {
+Gelf.prototype.processMessage = function(buffer, callback) {
   var self = this,
       config = self.config,
       chunkSize = buffer.length;
 
   if (config.connection === 'wan') {
     if (chunkSize > config.maxChunkSizeWan) {
-      self.processMultipleChunks(buffer, config.maxChunkSizeWan);
+      self.processMultipleChunks(buffer, config.maxChunkSizeWan, callback);
       return;
     }
   } else if (self.config.connection === 'lan') {
     if (chunkSize > config.maxChunkSizeLan) {
-      self.processMultipleChunks(buffer, config.maxChunkSizeLan);
+      self.processMultipleChunks(buffer, config.maxChunkSizeLan, callback);
       return;
     }
   }
   process.nextTick(function() {
-    self.sendMessage(buffer);
+    self.sendMessage(buffer, callback);
   });
 };
 
-Gelf.prototype.processMultipleChunks = function(buffer, chunkSize) {
+Gelf.prototype.processMultipleChunks = function(buffer, chunkSize, callback) {
   var self = this,
       chunkArray,
       datagrams;
@@ -129,10 +131,11 @@ Gelf.prototype.processMultipleChunks = function(buffer, chunkSize) {
 
   self.prepareDatagrams(chunkArray, function(err, datagrams) {
     if (err) {
+      callback && callback(err);
       return self.emitError(err);
     }
     process.nextTick(function() {
-      self.sendMultipleMessages(datagrams);
+      self.sendMultipleMessages(datagrams, callback);
     });
   });
 };
@@ -174,11 +177,23 @@ Gelf.prototype.prepareDatagrams = function(chunkArray, callback) {
   getRandomBytes();
 };
 
-Gelf.prototype.sendMultipleMessages = function(datagrams) {
+Gelf.prototype.sendMultipleMessages = function(datagrams, callback) {
   var self = this;
 
+  var len = datagrams.length;
+  var error;
+  var i=0;
+  var cb = function (err) {
+    if(err)
+      error=err;
+    i++;
+    if(i == len) {
+      callback && callback(error);
+    }
+  };
+
   datagrams.forEach(function(buffer) {
-    self.sendMessage(buffer);
+    self.sendMessage(buffer, cb);
   });
 };
 
