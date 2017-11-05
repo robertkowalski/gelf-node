@@ -70,6 +70,16 @@ Emitted for errors
 
 Logs a short or full message
 
+## Methods
+
+### closeSocket
+
+Closes the UDP Socket
+
+### openSocket
+
+Opens the Socket
+
 ## Tests
 
 ```
