@@ -27,7 +27,7 @@ gelf.on('error', (err) => {
 
 ```js
 const Gelf = require('gelf')
-var gelf = new Gelf({
+const gelf = new Gelf({
   graylogPort: 12201,
   graylogHostname: '127.0.0.1',
   connection: 'wan',
