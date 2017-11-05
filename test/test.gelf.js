@@ -1,145 +1,159 @@
-var chai = require('chai'),
-    sinon = require('sinon'),
-    sinonChai = require('sinon-chai'),
-    Gelf = require('../gelf'),
-    inflate = require('zlib').inflate,
-    os = require('os');
 
-chai.use(sinonChai);
-var expect = chai.expect;
+/* eslint-env mocha */
 
-describe('Gelf', function(done) {
+'use strict'
 
-  afterEach(function() {
+const assert = require('assert')
+const Gelf = require('../gelf.js')
+const inflate = require('zlib').inflate
+const EventEmitter = require('events')
+const dgram = require('dgram')
 
-  });
+describe('Gelf', () => {
+  it('should be an instance of EventEmitter', () => {
+    const gelf = new Gelf(null)
 
-  it('should be an instance of EventEmitter', function() {
-    var gelf = new Gelf(null);
-    var EventEmitter = require('events').EventEmitter;
+    assert.ok(gelf instanceof EventEmitter)
+  })
 
-    expect(gelf instanceof EventEmitter).to.equal(true);
-  });
+  it('should send message buffers by udp', (done) => {
+    const graylogStdPort = 12201
 
-  it('should send message buffers by udp', function(done) {
-    var graylogStdPort = 12201;
-    var graylogStdHost = 'localhost';
-
-    var dgram = require('dgram');
-    var server = dgram.createSocket('udp4');
+    const server = dgram.createSocket('udp4')
 
     server.on('message', function (msg, rinfo) {
-      /* Expect a message arrives at the server */
-      expect(msg.toString()).to.equal('bar');
-      done();
-    });
-    server.bind(graylogStdPort);
+      assert.equal(msg.toString(), 'bar')
+      server.close()
+      gelf.closeSocket()
+      done()
+    })
 
-    var gelf = new Gelf(null);
-    gelf.sendMessage(new Buffer('bar'));
-  });
+    server.bind(graylogStdPort)
 
-  it('should emit and receive events with attached event listeners', function(done) {
-    var gelf = new Gelf(null);
+    const gelf = new Gelf(null)
+    gelf.send(Buffer.from('bar'))
+  })
 
-    gelf.on('graylogmessage', function(message) {
-      expect(message).to.equal('meh');
-      done();
-    });
+  it('should deflate strings and call the callback afterwards', (done) => {
+    const gelf = new Gelf(null)
 
-    gelf.emit('graylogmessage', 'meh');
-  });
+    gelf.compress('pineapple', (err, res) => {
+      if (err) throw err
 
-  it('should deflate strings and call the callback afterwards', function(done) {
-    var gelf = new Gelf(null);
+      inflate(res, (err, buf) => {
+        if (err) throw err
 
-    var callback = function(buffer) {
-      inflate(buffer, function(err, buf) {
-        expect(buf.toString()).to.equal('bla');
-        done();
-      });
-    };
+        assert.equal(buf.toString(), 'pineapple')
+        done()
+      })
+    })
+  })
 
-    gelf.compress('bla', callback);
-  });
+  it('should emit an error if addiontal parameter is named _id', (done) => {
+    const gelf = new Gelf()
 
-  it('should add missing properties to the gelf-json', function(done) {
-    var gelf = new Gelf(null);
+    gelf.on('error', (err) => {
+      assert.equal(err.message, '_id is not allowed')
+      gelf.closeSocket()
+      done()
+    })
 
-    sinon.stub(gelf, 'compress', function(message) {
-      var json = JSON.parse(message);
-      expect(json.version).to.equal('1.0');
-      expect(json.host).to.equal(os.hostname());
-      expect(json.facility).to.equal('node.js');
-      expect(json.short_message).to.equal('Gelf Shortmessage');
+    gelf.emit('gelf.log', { _id: 'furbie' })
+  })
 
-      done();
-    });
+  it('prepares chunks according to the given chunksize', () => {
+    const gelf = new Gelf()
 
-    gelf.emit('gelf.log', null);
-  });
+    assert.deepEqual(
+      gelf.getChunks('123456789', 2),
+      [['1', '2'], ['3', '4'], ['5', '6'], ['7', '8'], ['9']]
+    )
 
-  it('should handle a string as shortmessage', function(done) {
-    var gelf = new Gelf(null);
+    assert.deepEqual(
+      gelf.getChunks('1234567890', 2),
+      [['1', '2'], ['3', '4'], ['5', '6'], ['7', '8'], ['9', '0']]
+    )
 
-    sinon.stub(gelf, 'compress', function(message) {
-      var json = JSON.parse(message);
+    gelf.closeSocket()
+  })
 
-      expect(json.short_message).to.equal('Mr. Lampe has left the building.');
-
-      done();
-    });
-
-    gelf.emit('gelf.log', 'Mr. Lampe has left the building.');
-  });
-
-  it('should throw an exception if config is incomplete', function() {
-      var test = function() {
-        new Gelf({"foo": "bar"});
-      };
-
-      expect(test).to.throw();
-      expect(test).to.throw(Error);
-  });
-
-  it('should throw an exception if addiontal parameter is named _id', function() {
-      var gelf = new Gelf();
-
-      var test = function() {
-        gelf.emit('gelf.log', {_id: 'bla'});
-      };
-
-      expect(test).to.throw();
-      expect(test).to.throw(Error);
-  });
-
-  it('should call prepareMultipleChunks() if message larger than maxSize', function(done) {
-    var gelf = new Gelf({
+  it('should chunk if message is larger than maxSize', () => {
+    const gelf = new Gelf({
       graylogPort: 12201,
       graylogHostname: '127.0.0.1',
       connection: 'wan',
       maxChunkSizeWan: 10,
       maxChunkSizeLan: 8154
-    });
+    })
 
-    var stub = sinon.stub(gelf, 'prepareMultipleChunks', function() {
+    const buf = Buffer.from('mr. lampe has left the building!!!!!!11111elf')
+    const res = gelf.maybeChunkMessage(buf)
 
-      expect(stub).to.have.been.calledOnce;
-      done();
-    });
+    assert.ok(Array.isArray(res))
+    gelf.closeSocket()
+  })
 
-    sinon.stub(gelf, 'prepareDatagrams');
-    sinon.stub(gelf, 'sendMessage');
-    sinon.stub(gelf, 'sendMultipleMessages');
+  it('no chunking for small messages', () => {
+    const gelf = new Gelf({
+      graylogPort: 12201,
+      graylogHostname: '127.0.0.1',
+      connection: 'wan',
+      maxChunkSizeWan: 100,
+      maxChunkSizeLan: 8154
+    })
 
-    gelf.emit('gelf.log', 'mehgssssssggggggggguiguguigiugigigiugigigigig');
-  });
+    const buf = Buffer.from('mr. lampe! hey hey!')
+    const res = gelf.maybeChunkMessage(buf)
 
-  it('prepares chunks according to the given chunksize', function() {
-    var gelf = new Gelf();
+    assert.ok(!Array.isArray(res), 'no array')
+    gelf.closeSocket()
+  })
 
-    expect(gelf.prepareMultipleChunks('123456789', 2)).to.deep.equal([['1', '2'], ['3', '4'], ['5', '6'], ['7', '8'], ['9']]);
-    expect(gelf.prepareMultipleChunks('1234567890', 2)).to.deep.equal([['1', '2'], ['3', '4'], ['5', '6'], ['7', '8'], ['9', '0']]);
-  });
+  it('integration test, short format', (done) => {
+    const graylogStdPort = 12201
 
-});
+    const server = dgram.createSocket('udp4')
+
+    server.on('message', function (msg, rinfo) {
+      inflate(msg, (err, buf) => {
+        if (err) throw err
+
+        const res = JSON.parse(buf.toString())
+        assert.equal(res.short_message, 'hallo hauke')
+        server.close()
+        gelf.closeSocket()
+        done()
+      })
+    })
+
+    server.bind(graylogStdPort)
+
+    const gelf = new Gelf(null)
+    gelf.emit('gelf.log', 'hallo hauke')
+  })
+
+  it('integration test, long format', (done) => {
+    const graylogStdPort = 12201
+
+    const server = dgram.createSocket('udp4')
+
+    server.on('message', function (msg, rinfo) {
+      inflate(msg, (err, buf) => {
+        if (err) throw err
+
+        const res = JSON.parse(buf.toString())
+        assert.equal(res.short_message, 'pineapple')
+        server.close()
+        gelf.closeSocket()
+        done()
+      })
+    })
+
+    server.bind(graylogStdPort)
+
+    const gelf = new Gelf(null)
+    gelf.emit('gelf.log', {
+      short_message: 'pineapple'
+    })
+  })
+})
