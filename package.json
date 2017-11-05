@@ -4,33 +4,27 @@
   "version": "1.0.3",
   "license": "MIT",
   "author": "Robert Kowalski <rok@kowalski.gd>",
-  "contributors": [
-    { "name": "Robert Kowalski", "email": "rok@kowalski.gd" }
-  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/robertkowalski/gelf-node.git"
   },
   "scripts": {
-    "test": "make"
+    "test": "npm run lint && npm run unit",
+    "lint": "standard",
+    "unit": "mocha"
   },
   "main": "gelf.js",
-  "engines" : {
-    "node" : ">=0.6.0"
-  },
-  "dependencies": {
-
-  },
-  "devDependencies": {
-    "chai": "",
-    "mocha": "",
-    "sinon-chai": "",
-    "sinon": ""
+  "engines": {
+    "node": ">=8.0"
   },
   "keywords": [
     "graylog",
     "gelf",
     "log",
     "logging"
-  ]
+  ],
+  "devDependencies": {
+    "mocha": "^4.0.1",
+    "standard": "^10.0.3"
+  }
 }
