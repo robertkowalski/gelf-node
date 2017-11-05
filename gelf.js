@@ -4,6 +4,7 @@ const deflate = require('zlib').deflate
 const dgram = require('dgram')
 const EventEmitter = require('events')
 const os = require('os')
+const async = require('async')
 
 const defaults = {
   graylogPort: 12201,
@@ -22,15 +23,15 @@ class Gelf extends EventEmitter {
     this.config = options = Object.assign({}, defaults, options)
     this.client = this.openSocket()
 
-    this.on('gelf.log', (json = {}) => {
+    this.on('gelf.log', (json = {}, cb = () => {}) => {
       const msg = this.sanitizeMsg(json)
       setImmediate(() => {
-        this.sendMessage(msg)
+        this.sendMessage(msg, cb)
       })
     })
 
-    this.on('gelf.message', (msg) => {
-      this.sendMessage(msg)
+    this.on('gelf.message', (msg, cb = () => {}) => {
+      this.sendMessage(msg, cb)
     })
   }
 
@@ -43,10 +44,10 @@ class Gelf extends EventEmitter {
     this.client.close()
   }
 
-  sendMessage (msg) {
+  sendMessage (msg, cb) {
     this.compress(msg, (_, buf) => {
       const m = this.maybeChunkMessage(buf)
-      this.send(m)
+      this.send(m, cb)
     })
   }
 
@@ -72,24 +73,31 @@ class Gelf extends EventEmitter {
     return buf
   }
 
-  send (msg) {
+  send (msg, cb = () => {}) {
     const { graylogPort, graylogHostname } = this.config
+    const client = this.client
 
-    function push (msg) {
-      this.client.send(msg, 0, msg.length, graylogPort, graylogHostname, (err) => {
-        if (err) return this.emitError(err)
-      })
+    if (!Array.isArray(msg)) {
+      msg = [ msg ]
     }
 
-    if (Array.isArray(msg)) {
-      msg.forEach((m) => {
-        push.call(this, m)
-      })
+    const tasks = msg.map((m) => {
+      const self = this
+      return function task (cb) {
+        client.send(m, 0, m.length, graylogPort, graylogHostname, (err) => {
+          if (err) {
+            return cb(err) && self.emitError(err)
+          }
 
-      return
-    }
+          return cb(null)
+        })
+      }
+    })
 
-    push.call(this, msg)
+    async.series(tasks, (err) => {
+      if (err) return cb(err) && this.emitError(err)
+      cb(null)
+    })
   }
 
   compress (msg, cb = () => {}) {
@@ -137,12 +145,14 @@ class Gelf extends EventEmitter {
   }
 
   sanitizeMsg (msg) {
-    const json = {}
+    let json = {}
 
     json.short_message = msg.short_message
 
     if (typeof msg === 'string') {
       json.short_message = msg
+    } else {
+      json = Object.assign({}, json, msg)
     }
 
     if (msg._id) {

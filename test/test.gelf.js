@@ -156,4 +156,54 @@ describe('Gelf', () => {
       short_message: 'pineapple'
     })
   })
+
+  it('integration test, short format with callback', (done) => {
+    const graylogStdPort = 12201
+
+    const server = dgram.createSocket('udp4')
+    server.on('message', function (msg, rinfo) {})
+    server.bind(graylogStdPort)
+
+    const gelf = new Gelf(null)
+    gelf.emit('gelf.log', 'hallo hauke', (err) => {
+      assert.equal(err, null)
+      server.close()
+      gelf.closeSocket()
+      done()
+    })
+  })
+
+  it('integration test, chunks with callback', (done) => {
+    const graylogStdPort = 12201
+    const gelf = new Gelf({
+      graylogPort: 12201,
+      graylogHostname: '127.0.0.1',
+      connection: 'wan',
+      maxChunkSizeWan: 10,
+      maxChunkSizeLan: 8154
+    })
+
+    const server = dgram.createSocket('udp4')
+
+    server.on('message', function (msg, rinfo) {
+      // console.log(msg)
+    })
+
+    server.bind(graylogStdPort)
+
+    const msg = {
+      short_message: 'foo',
+      version: '1.0',
+      host: 'tequila-new.fritz.box',
+      timestamp: 1509913576.072,
+      facility: 'node.js'
+    }
+
+    gelf.emit('gelf.log', msg, (err) => {
+      assert.equal(err, null)
+      server.close()
+      gelf.closeSocket()
+      done()
+    })
+  })
 })
