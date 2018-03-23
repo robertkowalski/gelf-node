@@ -48,7 +48,7 @@ const message = {
   "host": "www1",
   "short_message": "Short message",
   "full_message": "Backtrace here\n\nmore stuff",
-  "timestamp": 1291899928.412,
+  "timestamp": Date.now() / 1000,
   "level": 1,
   "facility": "payment-backend",
   "file": "/var/www/somefile.rb",
