@@ -37,6 +37,7 @@ class Gelf extends EventEmitter {
 
   openSocket () {
     const client = dgram.createSocket('udp4')
+    client.unref();
     return client
   }
 
