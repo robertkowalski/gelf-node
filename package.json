@@ -1,7 +1,7 @@
 {
   "name": "gelf",
   "description": "gelf is a full implementation for sending messages in GELF (Graylog Extended Log Format) from node.js",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "license": "MIT",
   "author": "Robert Kowalski <rok@kowalski.gd>",
   "repository": {
